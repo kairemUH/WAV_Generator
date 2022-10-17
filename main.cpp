@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 #define PROGRAM_NAME    "ee469_lab01_dtmf_wav_gen"
 #define FILENAME        "/home/mark/src/tmp/blob.wav"
@@ -54,6 +55,8 @@ void writeToFile(ofstream &file, int value, int size) {
 }
 
 int main() {
+
+    ////////////////////  Silence  ////////////////////
 
     ofstream myAudioFile;
     myAudioFile.open("silence.wav", ios::binary);
@@ -94,7 +97,8 @@ int main() {
     myAudioFile.close();
 
 
-////////////////////  Sawtooth Pattern  ////////////////////
+
+    ////////////////////  Sawtooth Pattern  ////////////////////
 
     ofstream sawtoothFile;
     sawtoothFile.open("sawtooth.wav", ios::binary);
@@ -136,6 +140,50 @@ int main() {
 
     sawtoothFile.close();
 
+
+    ////////////////////  Sine Wave  ////////////////////
+
+    ofstream sinFile;
+    sinFile.open("sine.wav", ios::binary);
+
+    // Header
+    sinFile << "RIFF";
+    sinFile << "----";  // size of file (to be filled later)
+    sinFile << "WAVE";
+    sinFile << "fmt ";
+    writeToFile(sinFile, 16, 4); // Size
+    writeToFile(sinFile, 1, 2); // Compression code
+    writeToFile(sinFile, 1, 2); // Number of channels
+    writeToFile(sinFile, sampleRate, 4); // Sample rate
+    writeToFile(sinFile, sampleRate * bitDepth / 8, 4 ); // Byte rate
+    writeToFile(sinFile, bitDepth / 8, 2); // Block align
+    writeToFile(sinFile, bitDepth, 2); // Bit depth
+    sinFile << "data";
+    sinFile << "----";  // size of data (to be filled later)
+
+    int sinPreAudioPosition = sinFile.tellp();
+
+    // create sin pattern from 1 to 255
+    float angle = 0;
+    for ( int i = 0; i < sampleRate; i++ ) {
+        writeToFile(sinFile, (127*sin(angle) + 128), 1);
+        angle+= M_PI / 4;
+    }
+
+    int sinPostAudioPosition = sinFile.tellp();
+
+    // fill in the size of the data
+    sinFile.seekp(sinPreAudioPosition - 4);
+    writeToFile(sinFile, sinPostAudioPosition - sinPreAudioPosition, 4);
+
+    // fill in the size of the file
+    sinFile.seekp(4, ios::beg);
+    writeToFile(sinFile, sinPostAudioPosition - 8, 4);
+
+    sinFile.close();
+
+
+    ////////////////////  DTMF Tone  ////////////////////
 
     return 0;
 }
