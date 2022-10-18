@@ -54,6 +54,19 @@ void writeToFile(ofstream &file, int value, int size) {
     file.write(reinterpret_cast<const char*> (&value), size);
 }
 
+
+// writes to file a sin wave with frequency in hertz and duration in seconds
+void sinFunc( int hertz, int duration ) {
+    float coef = ( Math.pow(2, bitDepth) / 2 ) - 1;
+    
+    // create sin pattern from 0 to 255
+    float angle = 0;
+    for ( int i = 0; i < sampleRate * duration; i++ ) {
+        writeToFile(sinFile, (coef*sin(angle) + coef), bitdepth/8);
+        angle+= 2 * M_PI / (sampleRate / hertz);
+    }
+}
+
 int main() {
 
     ////////////////////  Silence  ////////////////////
@@ -62,19 +75,19 @@ int main() {
     myAudioFile.open("silence.wav", ios::binary);
 
     // Header
-    myAudioFile << "RIFF";
-    myAudioFile << "----";  // size of file (to be filled later)
+    myAudioFile << "RIFF";            // File type
+    myAudioFile << "----";            // Size of file (to be filled later)
     myAudioFile << "WAVE";
     myAudioFile << "fmt ";
-    writeToFile(myAudioFile, 16, 4); // Size
-    writeToFile(myAudioFile, 1, 2); // Compression code
-    writeToFile(myAudioFile, 1, 2); // Number of channels
-    writeToFile(myAudioFile, sampleRate, 4); // Sample rate
-    writeToFile(myAudioFile, sampleRate * bitDepth / 8, 4 ); // Byte rate
-    writeToFile(myAudioFile, bitDepth / 8, 2); // Block align
-    writeToFile(myAudioFile, bitDepth, 2); // Bit depth
+    writeToFile(myAudioFile, 16, 4);                          // Size of format
+    writeToFile(myAudioFile, 1, 2);                           // Compression code
+    writeToFile(myAudioFile, 1, 2);                           // Number of channels
+    writeToFile(myAudioFile, sampleRate, 4);                  // Sample rate
+    writeToFile(myAudioFile, sampleRate * bitDepth / 8, 4 );  // Byte rate
+    writeToFile(myAudioFile, bitDepth / 8, 2);                // Block align
+    writeToFile(myAudioFile, bitDepth, 2);                    // Bit depth
     myAudioFile << "data";
-    myAudioFile << "----";  // size of data (to be filled later)
+    myAudioFile << "----";                    // Size of data (to be filled later)
 
     int preAudioPosition = myAudioFile.tellp();
 
@@ -184,6 +197,45 @@ int main() {
 
 
     ////////////////////  DTMF Tone  ////////////////////
+    
+    ofstream File;
+    sinFile.open("sine.wav", ios::binary);
 
+    // Header
+    sinFile << "RIFF";
+    sinFile << "----";  // size of file (to be filled later)
+    sinFile << "WAVE";
+    sinFile << "fmt ";
+    writeToFile(sinFile, 16, 4); // Size
+    writeToFile(sinFile, 1, 2); // Compression code
+    writeToFile(sinFile, 1, 2); // Number of channels
+    writeToFile(sinFile, sampleRate, 4); // Sample rate
+    writeToFile(sinFile, sampleRate * bitDepth / 8, 4 ); // Byte rate
+    writeToFile(sinFile, bitDepth / 8, 2); // Block align
+    writeToFile(sinFile, bitDepth, 2); // Bit depth
+    sinFile << "data";
+    sinFile << "----";  // size of data (to be filled later)
+
+    int sinPreAudioPosition = sinFile.tellp();
+
+    // create sin pattern from 1 to 255
+    float angle = 0;
+    for ( int i = 0; i < sampleRate; i++ ) {
+        writeToFile(sinFile, (127*sin(angle) + 128), 1);
+        angle+= M_PI / 4;
+    }
+
+    int sinPostAudioPosition = sinFile.tellp();
+
+    // fill in the size of the data
+    sinFile.seekp(sinPreAudioPosition - 4);
+    writeToFile(sinFile, sinPostAudioPosition - sinPreAudioPosition, 4);
+
+    // fill in the size of the file
+    sinFile.seekp(4, ios::beg);
+    writeToFile(sinFile, sinPostAudioPosition - 8, 4);
+
+    sinFile.close();
+  
     return 0;
 }
