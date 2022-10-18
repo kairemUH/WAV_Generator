@@ -57,7 +57,7 @@ void writeToFile(ofstream &file, int value, int size) {
 
 // writes to file a sin wave with frequency in hertz and duration in seconds
 void sinFunc( int hertz, int duration ) {
-    float coef = ( Math.pow(2, bitDepth) / 2 ) - 1;
+    float coef = ( pow(2, bitDepth) / 2 ) - 1;
     
     // create sin pattern from 0 to 255
     float angle = 0;
